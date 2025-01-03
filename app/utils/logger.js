@@ -1,5 +1,7 @@
 const pino = require('pino');
+const { z } = require('zod');
 
+const log_level_schema = z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]);
 const logger = pino({
 	level: process.env.LOG_LEVEL || 'info', 
 	transport: process.env.NODE_ENV === 'development' ? {
@@ -9,6 +11,11 @@ const logger = pino({
 			translateTime: 'SYS:standard', 
 		}, 
 	} : undefined, 
+	formatters: {
+		level: (label, number) => {
+			return {level: label +' ('+number.toString()+')'};
+		}
+	}, 
 	serializers: {
 		err: (error) => ({
 			message: error.message, 
@@ -19,4 +26,4 @@ const logger = pino({
 	}
 });
 
-module.exports = logger;
+module.exports = { logger, log_level_schema };

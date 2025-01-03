@@ -1,4 +1,5 @@
 const path = require('path');
+const { z } = require('zod');
 const cors = require('cors');
 const express = require('express');
 const passport = require('passport');
@@ -10,7 +11,7 @@ const { get_user, create_user, get_tasks, activate_task, deactivate_task } = req
 const errorHandler = require('./utils/error_handler');
 const CustomError = require('./utils/custom_error');
 const pino = require('pino-http');
-const logger = require('./utils/logger');
+const { logger, log_level_schema } = require('./utils/logger');
 
 const app = express();
 
@@ -108,8 +109,17 @@ app.post('/api/task/deactivate/', (req, res, next) => {
 	});
 });
 
-app.get('/api/hello', (req, res) => {
-	res.json({message: 'Hello from Node.js!' });
+
+app.post('/api/logger/level', (req, res) => {
+	const { level } = req.body;
+	try {
+		log_level_schema.parse(level);
+		logger.level = level;
+		res.json({ success: true, message: `Logging level updated to '${level}'` });
+	} catch (err) {
+		logger.warn({ err }, 'Invalid logging level provided');
+		res.status(400).json({ success: false, message: 'Invalid logging level provided', err: err.errors });
+	}
 });
 
 app.get('*', (req, res) => {

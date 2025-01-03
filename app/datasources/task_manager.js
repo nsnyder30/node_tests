@@ -26,8 +26,6 @@ const parse_insert_params = async (data, schema, field_map) => {
 		values.push(v);
 	}
 
-fields = [];
-
 	if(fields.length == 0) {
 		throw new CustomError(`No valid key-value pairs were provided`, 400, {data, schema, field_map});
 	}

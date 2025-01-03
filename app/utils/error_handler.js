@@ -1,5 +1,5 @@
 const pino = require('pino-http');
-const logger = require('./logger');
+const { logger } = require('./logger');
 
 module.exports = function handleError(err, req, res, next) {
 	logger.error({ err });
