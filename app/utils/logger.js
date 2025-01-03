@@ -9,6 +9,14 @@ const logger = pino({
 			translateTime: 'SYS:standard', 
 		}, 
 	} : undefined, 
+	serializers: {
+		err: (error) => ({
+			message: error.message, 
+			stack: error.stack.split('\n'), 
+			context: error.context || null, 
+			statusCode: error.statusCode || 500
+		})
+	}
 });
 
 module.exports = logger;

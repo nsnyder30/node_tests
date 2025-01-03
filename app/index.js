@@ -47,7 +47,7 @@ app.post('/login', passport.authenticate('local', {
 	failureRedirect: ''
 }));
 
-app.post('/api/create', async (req, res) => {
+app.post('/api/create', async (req, res, next) => {
         const {username, password } = req.body;
 
         try {
@@ -55,11 +55,11 @@ app.post('/api/create', async (req, res) => {
                 res.redirect('/');
 
         } catch (err) {
-		throw new CustomError(`An error occured while creating a new record`, 400, {}, err);
+		next(new CustomError(`An error occured while creating a new record`, 400, {}, err));
         }
 });
 
-app.get('/api/task/by_user/:user_id', (req, res) => {
+app.get('/api/task/by_user/:user_id', (req, res, next) => {
 	const user_id = Number(req.params.user_id);
 
 	get_tasks({ user_id: user_id })
@@ -67,7 +67,7 @@ app.get('/api/task/by_user/:user_id', (req, res) => {
 		const tasks = Array.isArray(result.tasks) ? result.tasks : {};
 		res.json( tasks );
 	}).catch(err => {
-		throw new CustomError(`Unable to find tasks associated with user ${user_id}`, 400, { user_id }, err);
+		next(new CustomError(`Unable to find tasks associated with user ${user_id}`, 400, { user_id }, err));
 	});
 });
 
@@ -84,7 +84,7 @@ app.get('/api/task/by_task/:task_id', (req, res) => {
 	res.json({task_id});
 });
 
-app.post('/api/task/activate', (req, res) => {
+app.post('/api/task/activate', (req, res, next) => {
 	let { task_id, owner, uid, start_time } = req.body;
 	task_id = Number(task_id);
 	owner = Number(owner);
@@ -94,17 +94,17 @@ app.post('/api/task/activate', (req, res) => {
 	.then(result => {
 		return res.json(result.task);
 	}).catch(err => {
-		throw new CustomError(`Task activation failed`, 400, { method: 'Task activation api endpoint'}, err);
+		next(new CustomError(`Task activation failed`, 400, { method: 'Task activation api endpoint'}, err));
 	});
 });
 
-app.post('/api/task/deactivate/', (req, res) => {
+app.post('/api/task/deactivate/', (req, res, next) => {
 	const task_id = Number(req.body.task_id);
 	deactivate_task({ task_id: task_id })
 	.then(result => {
 		return res.json(result.task);
 	}).catch(err => {
-		throw new CustomError(`Failed to deactivate task ${task_id}`, 400, { task_id }, err);
+		next(new CustomError(`Failed to deactivate task ${task_id}`, 400, { task_id }, err));
 	});
 });
 
