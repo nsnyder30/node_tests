@@ -6,7 +6,7 @@
 		"name": "task_manager"
 	},
 	"redisStore": {
-		"url": "redis://localhost:6379", 
+		"url": "redis://redis:6379", 
 		"secret": "my-secret-key", 
 		"password": "redispass"
 	}
