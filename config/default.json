@@ -1,6 +1,6 @@
 {
 	"db": {
-		"host": "localhost", 
+		"host": "db", 
 		"user":"task_user", 
 		"password": "taskpass", 
 		"name": "task_manager"
