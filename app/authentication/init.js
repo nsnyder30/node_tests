@@ -13,7 +13,7 @@ const { get_user } = require('../datasources/task_manager');
 function findUser(username, callback) {
 	get_user({ username: username })
 	.then(usearch => {
-		if ( usearch.res == 1 ) {
+		if ( usearch.user ) {
 			return callback(null, usearch.user);
 		}
 		return callback(null, null);
@@ -48,10 +48,10 @@ function initPassport () {
 					if (err) {
 						return done(err)
 					}
+
 					if(!isValid) {
 						return done(null, false)
 					}
-
 					return done(null, user)
 				})
 			})
