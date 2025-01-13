@@ -12,7 +12,7 @@ module.exports = function handleError(err, req, res, next) {
 	res.status(statusCode).json({
 		success: false, 
 		message, 
-		input_data, 
+		context, 
 		...(process.env.NODE_ENV === 'development' && {stack: err.stack}), 
 	});
 };
