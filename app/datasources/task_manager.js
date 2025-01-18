@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const pool = require('../../db');
 const CustomError = require('../utils/custom_error');
 const saltRounds = 10;
+const { logger } = require('../utils/logger');
 
 // METHOD FOR VALIDATING INPUT OBJECTS AND RETURNING QUERY FIELDS AND PARAMETERS
 const parse_insert_params = async (data, schema, field_map) => {
@@ -169,7 +170,7 @@ const get_tasks = async (task_data) => {
 		tasks = Object.keys(task_list).map(function(k){return task_list[k];});
 
 		if (tasks.length == 0) {
-			throw new CustomError(`No data returned by get_tasks method`, 400, { task_data, query, tasks });
+			logger.warn(`No tasks found for ${params.field} = ${params.value}`);
 		}
 
 		return {tasks: tasks, activities: activities};
