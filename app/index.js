@@ -7,7 +7,7 @@ const session = require('express-session');
 const { createClient } = require('redis');
 const rs = require('connect-redis');
 const config = require('config');
-const { get_user, create_user, get_tasks, activate_task, deactivate_task } = require('./datasources/task_manager');
+const { get_user, create_user, create_task, get_tasks, activate_task, deactivate_task } = require('./datasources/task_manager');
 const errorHandler = require('./utils/error_handler');
 const CustomError = require('./utils/custom_error');
 const pino = require('pino-http');
@@ -48,7 +48,7 @@ app.post('/login', passport.authenticate('local', {
 	failureRedirect: ''
 }));
 
-app.post('/api/create', async (req, res, next) => {
+app.post('/api/create/user', async (req, res, next) => {
         const {username, password } = req.body;
 
         try {
@@ -56,9 +56,20 @@ app.post('/api/create', async (req, res, next) => {
                 res.redirect('/');
 
         } catch (err) {
-		next(new CustomError(`An error occured while creating a new record`, 400, {}, err));
+		next(new CustomError(`An error occured while creating a new user`, 400, {}, err));
         }
 });
+
+app.post('/api/task/create', async (req, res, next) => {
+	const {task_name, task_status, task_owner, task_parent, task_level} = req.body;
+	try {
+		const result = await create_task({ task_name, task_status, task_owner, task_parent, task_level});
+		res.json(result.task);
+	} catch (err) {
+		next(new CustomError(`An error occured while creating a new task`, 400, {}, err));
+	}
+});
+
 
 app.get('/api/task/by_user/:user_id', (req, res, next) => {
 	const user_id = Number(req.params.user_id);

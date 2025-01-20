@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const pool = require('../../db');
 const CustomError = require('../utils/custom_error');
 const saltRounds = 10;
+const { logger } = require('../utils/logger');
 
 // METHOD FOR VALIDATING INPUT OBJECTS AND RETURNING QUERY FIELDS AND PARAMETERS
 const parse_insert_params = async (data, schema, field_map) => {
@@ -130,6 +131,64 @@ const create_user = async (user_data) => {
 	return {msg: 'User created'};
 };
 
+// DEFINE TASK SCHEMA AND FIELD MAP FOR PARSE_INPUT_PARAMS METHOD
+const task_schema = z.object({
+	task_name: z.string().min(1, 'Task name is required'), 
+	task_owner: z.number().int().positive('Task owner must be a positive integer'), 
+	task_parent: z.number().int().optional(), 
+	task_level: z.number().int().optional(), 
+	task_status: z.string().optional()
+});
+
+const task_field_map = {
+	task_name: 'tsk_name', 
+	task_owner: 'tsk_owner', 
+	task_parent: 'tsk_parent', 
+	task_level: 'tsk_level', 
+	task_status: 'tsk_status'
+};
+
+// METHOD: CREATE NEW TASK
+const create_task = async (task_data) => {
+	const conn = await pool.getConnection();
+
+	try {
+		await conn.beginTransaction();
+
+		const { fields, values } = await parse_insert_params (
+			task_data, 
+			task_schema, 
+			task_field_map
+		);
+
+		// Insert new data
+		const [insertResult] = await conn.execute(
+			'INSERT INTO tasks (' + fields.join(',') + ') VALUES (' + fields.map(() => '?').join(',') + ')', 
+			values
+		);
+
+		// Fetch updated record
+		const [newTask] = await conn.execute(
+			'SELECT * FROM tasks WHERE tsk_id = ?', 
+			[insertResult.insertId]
+		);
+
+		await conn.commit();
+		conn.release();
+
+		newTask[0].activities = [];
+		newTask[0].active = false;
+		return {
+			msg: 'Task created', 
+			task: newTask[0]
+		};
+	} catch (error) {
+		await conn.rollback();
+		conn.release();
+		throw new CustomError('Task creation failed', 500, { task_data }, error);
+	}
+}
+
 // METHOD: RETRIEVE ONE OR MORE TASKS, DEPENDING ON PROVIDED TASK DATA
 const get_tasks = async (task_data) => {
 	const params = await task_condition(task_data);
@@ -169,7 +228,7 @@ const get_tasks = async (task_data) => {
 		tasks = Object.keys(task_list).map(function(k){return task_list[k];});
 
 		if (tasks.length == 0) {
-			throw new CustomError(`No data returned by get_tasks method`, 400, { task_data, query, tasks });
+			logger.warn(`No tasks found for ${params.field} = ${params.value}`);
 		}
 
 		return {tasks: tasks, activities: activities};
@@ -242,4 +301,4 @@ const deactivate_task = async (task_data) => {
 	}
 }
 
-module.exports = { get_user, create_user, get_tasks , activate_task, deactivate_task };
+module.exports = { get_user, create_user, create_task, get_tasks , activate_task, deactivate_task };
